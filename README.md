@@ -25,7 +25,7 @@ This is a simple web application that allows users to generate a custom Spotify 
     d.  Fill in the App Name and App Description. Agree to the terms and conditions.
     e.  Once the app is created, you will see your **Client ID** and **Client Secret**.
     f.  Click on "Edit Settings".
-    g.  Under "Redirect URIs", add `http://localhost:3000/callback`. This is crucial for the OAuth flow to work correctly during development.
+    g.e.  Under "Redirect URIs", add `https://spotplaylist.netlify.app/callback`. This is crucial for the OAuth flow to work correctly during development.
 
 3.  **Update `script.js`:**
 
@@ -34,7 +34,7 @@ This is a simple web application that allows users to generate a custom Spotify 
 
     ```javascript
     const CLIENT_ID = 'YOUR_CLIENT_ID'; // Replace with your Spotify Client ID
-    const REDIRECT_URI = 'http://localhost:3000/callback'; // Must match your Spotify app settings
+    const REDIRECT_URI = 'https://spotplaylist.netlify.app/callback'; // Must match your Spotify app settings
     ```
 
 4.  **Run the Application:**
@@ -57,8 +57,9 @@ This is a simple web application that allows users to generate a custom Spotify 
 ## Usage
 
 1.  Click the "Login with Spotify" button to authenticate with your Spotify account.
-2.  After successful login, enter the names of artists (comma-separated) in the input field.
-3.  Click "Generate Playlist" to create a new playlist on your Spotify account containing top tracks from the specified artists.
+2.  After successful login, enter the names of artists (comma-separated) in the "Enter artist names" field.
+3.  Optionally, provide a "Playlist Name" and "Playlist Description". If left blank, a default name and description will be generated.
+4.  Click "Generate Playlist" to create a new playlist on your Spotify account containing top tracks from the specified artists.
 
 ## Project Structure
 

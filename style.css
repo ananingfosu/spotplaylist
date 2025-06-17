@@ -51,8 +51,22 @@ input[type="text"] {
     font-size: 16px;
 }
 
-input[type="text"]::placeholder {
+input[type="text"]::placeholder,
+textarea::placeholder {
     color: #b3b3b3;
+}
+
+textarea {
+    width: calc(100% - 20px);
+    padding: 10px;
+    margin: 15px 0;
+    border: 1px solid #535353;
+    border-radius: 5px;
+    background-color: #3e3e3e;
+    color: #fff;
+    font-size: 16px;
+    resize: vertical;
+    min-height: 80px;
 }
 
 #message {

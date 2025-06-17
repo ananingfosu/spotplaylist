@@ -2,11 +2,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const loginButton = document.getElementById('login-button');
     const appContent = document.getElementById('app-content');
     const artistInput = document.getElementById('artist-input');
+    const playlistNameInput = document.getElementById('playlist-name-input');
+    const playlistDescriptionInput = document.getElementById('playlist-description-input');
     const generatePlaylistButton = document.getElementById('generate-playlist-button');
     const messageElement = document.getElementById('message');
 
-    const CLIENT_ID = 'YOUR_CLIENT_ID'; // Replace with your Spotify Client ID
-    const REDIRECT_URI = 'http://localhost:3000/callback'; // Must match your Spotify app settings
+    const CLIENT_ID = '82e2367832c54321b01befa8b1c35a48'; // Replace with your Spotify Client ID
+    const REDIRECT_URI = 'https://spotplaylist.netlify.app/callback'; // Must match your Spotify app settings
     const SCOPES = ['playlist-modify-public', 'playlist-modify-private', 'user-read-private'];
 
     let accessToken = '';
@@ -56,77 +58,59 @@ document.addEventListener('DOMContentLoaded', () => {
         window.location = authUrl;
     });
 
+    // Helper function for Spotify API calls
+    async function spotifyApiCall(url, token, options = {}) {
+        const headers = {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            ...options.headers
+        };
+        const response = await fetch(url, { ...options, headers });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(`Spotify API error: ${response.status} ${response.statusText} - ${errorData.error?.message || 'Unknown error'}`);
+        }
+        return response.json();
+    }
+
     // Get User ID
     async function getUserId(token) {
-        const response = await fetch('https://api.spotify.com/v1/me', {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
+        const data = await spotifyApiCall('https://api.spotify.com/v1/me', token);
         return data.id;
     }
 
     // Search for an artist
     async function searchArtist(artistName, token) {
-        const response = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(artistName)}&type=artist&limit=1`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
+        const data = await spotifyApiCall(`https://api.spotify.com/v1/search?q=${encodeURIComponent(artistName)}&type=artist&limit=1`, token);
         return data.artists.items[0]?.id;
     }
 
     // Get top tracks for an artist
     async function getArtistTopTracks(artistId, token) {
-        const response = await fetch(`https://api.spotify.com/v1/artists/${artistId}/top-tracks?market=US`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
+        const data = await spotifyApiCall(`https://api.spotify.com/v1/artists/${artistId}/top-tracks?market=US`, token);
         return data.tracks;
     }
 
     // Create a playlist
     async function createPlaylist(userId, token, name, description) {
-        const response = await fetch(`https://api.spotify.com/v1/users/${userId}/playlists`, {
+        const data = await spotifyApiCall(`https://api.spotify.com/v1/users/${userId}/playlists`, token, {
             method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
             body: JSON.stringify({
                 name: name,
                 description: description,
                 public: true
             })
         });
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
         return data.id;
     }
 
     // Add tracks to a playlist
     async function addTracksToPlaylist(playlistId, token, trackUris) {
-        const response = await fetch(`https://api.com/v1/playlists/${playlistId}/tracks`, {
+        return spotifyApiCall(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, token, {
             method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
             body: JSON.stringify({ uris: trackUris })
         });
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
     }
 
     // Generate playlist button click handler
@@ -139,6 +123,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         messageElement.textContent = 'Generating playlist...';
         let allTrackUris = [];
+
+        const customPlaylistName = playlistNameInput.value.trim();
+        const customPlaylistDescription = playlistDescriptionInput.value.trim();
 
         try {
             for (const artistName of artistNames) {
@@ -153,8 +140,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (allTrackUris.length > 0) {
-                const playlistName = `Playlist for ${artistNames.join(', ')}`;
-                const playlistDescription = `Generated by Spotify Playlist Generator for artists: ${artistNames.join(', ')}.`;
+                const playlistName = customPlaylistName || `Playlist for ${artistNames.join(', ')}`;
+                const playlistDescription = customPlaylistDescription || `Generated by Spotify Playlist Generator for artists: ${artistNames.join(', ')}.`;
                 const newPlaylistId = await createPlaylist(userId, accessToken, playlistName, playlistDescription);
                 await addTracksToPlaylist(newPlaylistId, accessToken, allTrackUris);
                 messageElement.textContent = `Playlist "${playlistName}" created successfully! Check your Spotify account.`;
